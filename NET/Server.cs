@@ -1,7 +1,9 @@
 ﻿using ChatServer.NET.IO;
+using NAudio.Wave;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
@@ -17,12 +19,24 @@ namespace ChatApp.NET
         public event Action messageReceivedEvent;
         public event Action userDisconnectEvent;
         public event Action groupCreatedEvent;
+        public event Action isValidUserEvent;
 
         public PacketReader PacketReader;
+
         public Server()
         {
             _client = new TcpClient();
         }
+        public void loginToServer(string username, string password)
+        {
+            ConnectToServer(username);
+            var connectPacket = new PacketBuilder();
+            connectPacket.WriteOpCode(3);
+            connectPacket.WriteMessage(username);
+            connectPacket.WriteMessage(password);
+            _client.Client.Send(connectPacket.GetPacketBytes());
+        }
+
 
         public void ConnectToServer(string username)
         {
@@ -66,6 +80,9 @@ namespace ChatApp.NET
                             case 2:
                                 groupCreatedEvent?.Invoke();
                                 break;
+                            case 3:
+                                isValidUserEvent?.Invoke();
+                                break;
                             case 5:
                                 messageReceivedEvent?.Invoke();
                                 break;
@@ -77,9 +94,9 @@ namespace ChatApp.NET
                                 break;
                         }
                     }
-                    catch
+                    catch(Exception ex)
                     {
-                        MessageBox.Show("Sunucu çöktü, uygulama kapanıyor... ");
+                        MessageBox.Show("Sunucu Çöktü Uygulama kapanıyor... ");
                         Application.Current.Dispatcher.Invoke(() => Application.Current.Shutdown());
                         return;
                     }

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Lidgren.Network;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -30,5 +31,7 @@ namespace ChatServer.NET.IO
         {
             return _ms.ToArray();
         }
+
+
     }
 }

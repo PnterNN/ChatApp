@@ -2,23 +2,26 @@
 using ChatApp.MVVM.Model;
 using ChatApp.NET;
 using ChatServer.NET.IO;
+using NAudio.Wave;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Configuration;
 using System.Linq;
+using System.Net.Sockets;
+using System.Net;
 using System.Security.AccessControl;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
+using System.Linq.Expressions;
 
 namespace ChatApp.MVVM.ViewModel
 {
     class MainViewModel : ObservableObject
     {
-
         public ObservableCollection<MessageModel> Messages { get; set; }
         public ObservableCollection<ContactModel> Contacts { get; set; }
 
@@ -28,7 +31,6 @@ namespace ChatApp.MVVM.ViewModel
 
         public RelayCommand CameraCommand { get; set; }
 
-        private const string V = "";
         private Server _server;
         public String Username { get; set; }
 
@@ -84,6 +86,7 @@ namespace ChatApp.MVVM.ViewModel
                 Application.Current.Dispatcher.Invoke(() => Contacts.Add(user));
             }
         }
+
         private void MessageReceived()
         {
             var msg = _server.PacketReader.ReadMessage();
@@ -95,6 +98,11 @@ namespace ChatApp.MVVM.ViewModel
             {
                 Application.Current.Dispatcher.Invoke(() =>
                 {
+                    bool FirstMessage = false;
+                    if (contact.LastMessageUser != username)
+                    {
+                        FirstMessage = true;
+                    }
                     contact.Messages.Add(new MessageModel
                     {
                         Username = username,
@@ -102,8 +110,8 @@ namespace ChatApp.MVVM.ViewModel
                         ImageSource = "",
                         Message = msg,
                         Time = DateTime.Now,
-                        IsNativeOrigin = false,
-                        FirstMessage = true
+                        IsNativeOrigin = true,
+                        FirstMessage = FirstMessage
                     });
                 });
                 if (_selectedContact != contact)
@@ -124,45 +132,59 @@ namespace ChatApp.MVVM.ViewModel
             }
         }
 
-        private void sendCommand(string[] args)
+        private void SendCommand(string[] args)
         {
-            //Create a group named args[2] with usernames args[3-infinity]
-            if (args[0].ToLower() == "/group" && args[1].ToLower() == "create" || args[2] != null)
+            try
             {
-                try
+                //Create a group named args[2] with usernames args[3-infinity]
+                if (args[0].ToLower() == "/group" && args[1].ToLower() == "create" || args[2] != null)
                 {
-                    string invaildusers = "";
-                    string users = "";
-                    for (int i = 0; i < args.Length - 3; i++)
+                    try
                     {
-                        if (args[i + 3] != null)
+                        string invaildusers = "";
+                        string users = "";
+                        for (int i = 0; i < args.Length - 3; i++)
                         {
-                            var user = Contacts.Where(x => x.Username.ToLower() == args[i + 3].ToLower()).FirstOrDefault();
-                            if (user != null)
+                            if (args[i + 3] != null)
                             {
-                                users += args[i + 3].ToLower() + " ";
-                            }
-                            else
-                            {
-                                invaildusers += args[i + 3] + " ";
+                                var user = Contacts.Where(x => x.Username.ToLower() == args[i + 3].ToLower()).FirstOrDefault();
+                                if (user.Users == null)
+                                {
+                                    if (user != null)
+                                    {
+                                        users += args[i + 3].ToLower() + " ";
+                                    }
+                                    else
+                                    {
+                                        invaildusers += args[i + 3] + " ";
+                                    }
+                                }
+                                else
+                                {
+                                    invaildusers += args[i + 3] + " ";
+                                }
                             }
                         }
+                        users = users.TrimEnd(' ');
+                        invaildusers = invaildusers.TrimEnd(' ');
+                        if (invaildusers == "")
+                        {
+                            _server.createGroup(args[2], users);
+                        }
+                        else
+                        {
+                            MessageBox.Show($"Kullanıcı Bulunamadığı için grup oluşturalamadı, bulanamayan kullanıcılar: ({invaildusers})");
+                        }
                     }
-                    users = users.TrimEnd(' ');
-                    invaildusers = invaildusers.TrimEnd(' ');
-                    if (invaildusers == "")
+                    catch
                     {
-                        _server.createGroup(args[2], users);
-                    }
-                    else
-                    {
-                        MessageBox.Show($"Kullanıcı Bulunamadığı için grup oluşturalamadı, bulanamayan kullanıcılar: ({invaildusers})");
+                        return;
                     }
                 }
-                catch
-                {
-                    return;
-                }
+            }
+            catch
+            {
+                return;
             }
         }
 
@@ -200,6 +222,15 @@ namespace ChatApp.MVVM.ViewModel
             Application.Current.Dispatcher.Invoke(() => Contacts.Add(user));
         }
 
+        private void call(Server _server)   
+        {
+            MessageBox.Show(Username + "-> " + _selectedContact.Username + " Arama açılıyor...");
+
+        }
+        private void callWithCamera(Server _server)
+        {
+            MessageBox.Show("ses kapanıyor...");
+        }
         public MainViewModel()
         {
             Contacts = new ObservableCollection<ContactModel>();
@@ -207,12 +238,12 @@ namespace ChatApp.MVVM.ViewModel
 
             CallCommand = new RelayCommand(o =>
             {
-                MessageBox.Show(Username + "-> " + _selectedContact.Username + " Arama açılıyor...");
+                call(_server);
             });
 
             CameraCommand = new RelayCommand(o =>
             {
-                MessageBox.Show(Username + "-> " + _selectedContact.Username + " Kameralı arama açılıyor...");
+                callWithCamera(_server);
             });
 
             SendMessageCommand = new RelayCommand(o =>
@@ -221,6 +252,11 @@ namespace ChatApp.MVVM.ViewModel
                 {
                     if (_selectedContact != null)
                     {
+                        bool FirstMessage = false;
+                        if (_selectedContact.LastMessageUser != Username)
+                        {
+                            FirstMessage = true;
+                        }
                         if (_selectedContact.Users == null)
                         {
                             SelectedContact.Messages.Add(new MessageModel
@@ -231,7 +267,7 @@ namespace ChatApp.MVVM.ViewModel
                                 Message = Message,
                                 Time = DateTime.Now,
                                 IsNativeOrigin = true,
-                                FirstMessage = true
+                                FirstMessage = FirstMessage
                             });
                             _server.SendMessageToServer(Message, SelectedContact.UID);
                         }
@@ -249,22 +285,27 @@ namespace ChatApp.MVVM.ViewModel
                 else
                 {
                     string[] args = Message.Split(' ');
-                    sendCommand(args);
+                    SendCommand(args);
                 }
                 Message = "";
             }
             });
 
-            _server = new Server();
+            _server = new Server();//LoginViewModel.Server;
 
             _server.connectedEvent += UserConnected;
             _server.messageReceivedEvent += MessageReceived;
             _server.userDisconnectEvent += UserDisconnected;
             _server.groupCreatedEvent += createGroup;
 
+
+
             ConnectToServerCommand = new RelayCommand(o =>
             {
-                _server.ConnectToServer(Username);
+                if (Username != null)
+                {
+                    _server.ConnectToServer(Username);
+                }
             });
         }
     }

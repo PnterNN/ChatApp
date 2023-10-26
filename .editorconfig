@@ -1,0 +1,4 @@
+﻿[*.cs]
+
+# CS8622: Muhtemelen null atanabilirlik öznitelikleri nedeniyle, parametre türündeki başvuru türlerinin null atanabilirliği hedef temsilciyle eşleşmiyor.
+dotnet_diagnostic.CS8622.severity = none

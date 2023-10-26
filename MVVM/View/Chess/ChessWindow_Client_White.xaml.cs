@@ -12,14 +12,14 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 
-namespace ChatApp
+namespace ChatApp.MVVM.View
 {
     /// <summary>
-    /// Login.xaml etkileşim mantığı
+    /// ChessWindow_Client1.xaml etkileşim mantığı
     /// </summary>
-    public partial class LoginViewModel : Window
+    public partial class ChessWindow_Client_White : Window
     {
-        public LoginViewModel()
+        public ChessWindow_Client_White()
         {
             InitializeComponent();
         }
@@ -49,12 +49,8 @@ namespace ChatApp
 
         private void ButtonClose_Click(object sender, RoutedEventArgs e)
         {
+
             Application.Current.Shutdown();
-        }
-
-        private void TextBox_TextChanged(object sender, TextChangedEventArgs e)
-        {
-
         }
     }
 }

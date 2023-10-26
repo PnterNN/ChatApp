@@ -18,6 +18,7 @@ namespace ChatApp.MVVM.Model
         public string ImageSource { get; set; }
         public ObservableCollection<MessageModel> Messages { get; set; }
         public string LastMessage => Messages.Last().Message;
+        public string LastMessageUser => Messages.Last().Username;
 
 
     }

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using NAudio.Wave;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -11,10 +12,12 @@ namespace ChatServer.NET.IO
     class PacketReader : BinaryReader
     {
         private NetworkStream _ns;
+
         public PacketReader(NetworkStream ns) : base(ns)
         {
             _ns = ns;
         }
+
         public string ReadMessage()
         {
             byte[] msgBuffer;
