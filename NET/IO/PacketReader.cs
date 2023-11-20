@@ -11,7 +11,7 @@ namespace ChatServer.NET.IO
 {
     class PacketReader : BinaryReader
     {
-        private NetworkStream _ns;
+        public NetworkStream _ns;
 
         public PacketReader(NetworkStream ns) : base(ns)
         {

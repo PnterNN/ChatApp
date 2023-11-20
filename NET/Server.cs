@@ -35,16 +35,15 @@ namespace ChatApp.NET
             connectPacket.WriteMessage(username);
             connectPacket.WriteMessage(password);
             _client.Client.Send(connectPacket.GetPacketBytes());
+            connectPacket._ms.Dispose();
         }
-
-
         public void ConnectToServer(string username)
         {
             if (!_client.Connected)
             {
                 try
                 {
-                    _client.Connect("127.0.0.1", 37335);
+                    _client.Connect("127.0.0.1", 9001);
                 }
                 catch
                 {
@@ -60,10 +59,12 @@ namespace ChatApp.NET
                 connectPacket.WriteOpCode(0);
                 connectPacket.WriteMessage(username);
                 _client.Client.Send(connectPacket.GetPacketBytes());
-                ReadPackets();
+                connectPacket._ms.Dispose();
+                ReadPackets(PacketReader._ns);
+                
             }
         }
-        private void ReadPackets()
+        private void ReadPackets(NetworkStream packet)
         {
             Task.Run(() =>
             {
@@ -96,6 +97,7 @@ namespace ChatApp.NET
                     }
                     catch(Exception ex)
                     {
+                        packet.Dispose();
                         MessageBox.Show("Sunucu Çöktü Uygulama kapanıyor... ");
                         Application.Current.Dispatcher.Invoke(() => Application.Current.Shutdown());
                         return;
@@ -112,6 +114,7 @@ namespace ChatApp.NET
             packet.WriteMessage(groupName);
             packet.WriteMessage(users);
             _client.Client.Send(packet.GetPacketBytes());
+            packet._ms.Dispose();
         }
         public void SendMessageToGroup(string message, string contactUID)
         {
@@ -120,6 +123,7 @@ namespace ChatApp.NET
             packet.WriteMessage(message);
             packet.WriteMessage(contactUID);
             _client.Client.Send(packet.GetPacketBytes());
+            packet._ms.Dispose();
         }
         public void SendMessageToServer(string message, string contactUID)
         {
@@ -128,6 +132,7 @@ namespace ChatApp.NET
             packet.WriteMessage(message);
             packet.WriteMessage(contactUID);
             _client.Client.Send(packet.GetPacketBytes());
+            packet._ms.Dispose();
         }
 
     }

@@ -10,7 +10,7 @@ namespace ChatServer.NET.IO
 {
     class PacketBuilder
     {
-        MemoryStream _ms;
+        public MemoryStream _ms;
         public PacketBuilder()
         {
             _ms = new MemoryStream();

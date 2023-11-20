@@ -58,5 +58,10 @@ namespace ChatApp
         {
             loginButton.IsEnabled = false;
         }
+
+        private void PasswordBox_Loaded(object sender, RoutedEventArgs e)
+        {
+
+        }
     }
 }
